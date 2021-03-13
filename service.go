@@ -14,7 +14,7 @@ func gameInit(data Post) { //hangman游戏逻辑
 	wordList := []string{"apiary", "beetle", "cereal", "danger", "ensign", "florid", "garage", "health", "insult",
 		"jackal", "keeper", "loaner", "manage", "nonce", "onset", "plaid", "quilt", "remote",
 		"stolid", "train", "useful", "valid", "whence", "xenon", "yearn", "zippy"}
-	rand.Seed(time.Now().Unix())
+	rand.Seed(time.Now().UnixNano())
 	target := wordList[rand.Int()%NUM]
 	attempt := strings.Repeat("-", len(target))
 	var badChars = ""
@@ -178,9 +178,11 @@ func gameService(data Post) {
 }
 
 func HotPotatoInit(data Post) {
+	//寻找是否有进行中的游戏
 	ttl := TTLList(data.GroupID)
 	log.Println(ttl)
 	if ttl < 1 {
+		//如果没有进行中的游戏，则开启新的游戏队列
 		CreateList(data.UserID, data.GroupID)
 		req := request{
 			GroupID: data.GroupID,
@@ -195,6 +197,7 @@ func HotPotatoInit(data Post) {
 		}
 		log.Println(res)
 		time.Sleep(time.Second * 60)
+		//等待六十秒后，看是否有玩家加入游戏
 		list := FindList(data.GroupID)
 		if len(list) == 1 {
 			req := request{
@@ -228,9 +231,11 @@ func HotPotatoInit(data Post) {
 }
 
 func HotPotatoService(data Post) {
+	//检测是否存在开启的游戏队列
 	ttl := TTLList(data.GroupID)
 	if ttl > 0 {
 		list := FindList(data.GroupID)
+		//检测输入报名的玩家是否已经报名
 		for _, v := range list {
 			if v == data.UserID {
 				req := request{
@@ -248,6 +253,7 @@ func HotPotatoService(data Post) {
 				return
 			}
 		}
+		//如果没有报名则插入队列中
 		InsertToList(data.UserID, data.GroupID)
 		list = FindList(data.GroupID)
 		playerNum := len(list)
@@ -266,6 +272,7 @@ func HotPotatoService(data Post) {
 		}
 		log.Println(res)
 		time.Sleep(time.Second * 5)
+		//睡眠五秒后查看列表是否有玩家数量更改，没有更改游戏开始，更改了则等下一个线程执行任务
 		list = FindList(data.GroupID)
 		if len(list) == playerNum {
 			DelList(data.GroupID)
@@ -296,7 +303,8 @@ func HotPotatoService(data Post) {
 					Percentage: 20,
 				},
 			}
-			rand.Seed(time.Now().Unix())
+			//随机生成山芋
+			rand.Seed(time.Now().UnixNano())
 			potato := potatoes[rand.Int()%5]
 			req = request{
 				GroupID: data.GroupID,
@@ -309,8 +317,9 @@ func HotPotatoService(data Post) {
 				return
 			}
 			log.Println(res)
+			//从第一个玩家开始遍历爆炸，爆炸游戏结束，玩家被禁言，未结束直到最后一个玩家，回到第一个玩家
 			for i := 0; i < len(list); i++ {
-				rand.Seed(time.Now().Unix())
+				rand.Seed(time.Now().UnixNano())
 				r := rand.Int() % 101
 				if r <= potato.Percentage {
 					req = request{
