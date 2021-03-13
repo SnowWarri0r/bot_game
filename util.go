@@ -50,6 +50,7 @@ func HttpGetMessage(url string, data request, result string) error {
 	result = string(body)
 	return nil
 }
+
 func HttpGetMute(url string, data MuteRequest, result string) error {
 	var client = http.Client{
 		Timeout: 10 * time.Second,
@@ -66,6 +67,7 @@ func HttpGetMute(url string, data MuteRequest, result string) error {
 	params.Set("access_token", data.Token)
 	Url.RawQuery = params.Encode()
 	urlPath := Url.String()
+	log.Println(urlPath)
 	response, err := client.Get(urlPath)
 	if err != nil {
 		return err

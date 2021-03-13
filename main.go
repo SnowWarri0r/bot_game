@@ -15,6 +15,7 @@ func main() {
 	e := gin.Default()
 	e.POST("/hangman", hangMan())
 	e.POST("/hotPotato", hotPotato())
+	e.GET("/timer", timer())
 	srv := &http.Server{
 		Addr:    ":8081",
 		Handler: e,
@@ -60,5 +61,10 @@ func hangMan() gin.HandlerFunc {
 				go gameService(dat)
 			}
 		}
+	}
+}
+func timer() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		Timer()
 	}
 }

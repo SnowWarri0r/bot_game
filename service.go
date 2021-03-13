@@ -1,8 +1,11 @@
 package main
 
 import (
+	"encoding/json"
+	"io/ioutil"
 	"log"
 	"math/rand"
+	"net/http"
 	"strconv"
 	"strings"
 	"time"
@@ -318,7 +321,7 @@ func HotPotatoService(data Post) {
 			}
 			log.Println(res)
 			//从第一个玩家开始遍历爆炸，爆炸游戏结束，玩家被禁言，未结束直到最后一个玩家，回到第一个玩家
-			for i := 0; i < len(list); i++ {
+			for i := 0; i < len(list); {
 				rand.Seed(time.Now().UnixNano())
 				r := rand.Int() % 101
 				if r <= potato.Percentage {
@@ -357,12 +360,52 @@ func HotPotatoService(data Post) {
 						return
 					}
 					log.Println(res)
-					if i == len(list)-1 {
-						i = 0
-					}
+					time.Sleep(time.Second)
 				}
-				time.Sleep(time.Millisecond * 800)
+				i++
+				if i == len(list) {
+					i = 0
+				}
 			}
 		}
 	}
+}
+func Timer() {
+	now:=time.Now()
+	now=time.Date(now.Year(),now.Month(),now.Day(),now.Hour(),0,0,0,now.Location())
+	var client = http.Client{
+		Timeout: 10 * time.Second,
+	}
+	resp,err:=client.Get("https://v1.hitokoto.cn/?c=a&c=d&c=k&encode=json&charset=utf-8")
+	if err!=nil{
+		log.Println(err.Error())
+		return
+	}
+	defer resp.Body.Close()
+	buf,err:=ioutil.ReadAll(resp.Body)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	var obj map[string]interface{}
+	err=json.Unmarshal(buf,&obj)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	hitokoto:=obj["hitokoto"].(string)
+	from:=obj["from"].(string)
+	req:=request{
+		GroupID: 831890208,
+		Message: "整点啦！\nDate:"+strconv.Itoa(now.Year())+"年"+now.Format("01")+"月"+strconv.Itoa(now.Day())+"日\n" +
+			"现在是北京时间"+strconv.Itoa(now.Hour())+"点\n-------------\n"+hitokoto+"\n——"+from,
+			Token: AccessToken,
+	}
+	var res string
+	err = HttpGetMessage(URL, req, res)
+	if err != nil {
+		log.Println(err.Error())
+		return
+	}
+	log.Println(res)
 }
