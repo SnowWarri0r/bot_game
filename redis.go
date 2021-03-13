@@ -14,7 +14,6 @@ func ConnectRedis() {
 		MaxActive:   1000,
 		IdleTimeout: 240 * time.Second,
 		Dial: func() (redis.Conn, error) {
-			//数据库配置
 			return redis.Dial("tcp", "127.0.0.1:8090", redis.DialPassword("passwd"))
 		},
 	}
